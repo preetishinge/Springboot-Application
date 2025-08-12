@@ -1,11 +1,38 @@
-node {
-  stage('SCM') {
-    checkout scm
-  }
-  stage('SonarQube Analysis') {
-    def mvn = tool 'Default Maven';
-    withSonarQubeEnv() {
-      sh "${mvn}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=Simple-Hello-Preeti"
+pipeline {
+    agent any
+    tools{
+        maven 'maven'
     }
-  }
+    environment {
+        SONARQUBE_URL = 'https://d6312cd2eccd.ngrok-free.app/projects'
+        SONARQUBE_TOKEN = credentials ('sqa_e5c25c5c841cf84f6cc7bf23019ce5ca3695a075')
+    }
+    stages {
+        stage('Checkout'){
+            steps{
+                git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/preetishinge/Springboot-sonarqube'
+                sh 'ls -la'
+            }
+        }
+        stage('Build'){
+            steps{
+                sh 'mvn clean install'
+            }
+        }
+        stage('Package'){
+            steps{
+                sh 'mvn package'
+            }
+        }
+        stage('SonarQube Analysis'){
+            steps{
+                sh '''
+                mvn sonar:sonar \
+                  -Dsonar.projectKey=springboot-demo \
+                  -Dsonar.host.url=https://d6312cd2eccd.ngrok-free.app \
+                  -Dsonar.login=$SONARQUBE_TOKEN
+                '''
+            }
+        }
+    }
 }
