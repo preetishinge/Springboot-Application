@@ -5,7 +5,7 @@ pipeline {
     }
     environment {
         SONARQUBE_URL = 'https://d6312cd2eccd.ngrok-free.app/projects'
-        SONARQUBE_TOKEN = credentials ('sqa_e5c25c5c841cf84f6cc7bf23019ce5ca3695a075')
+        SONARQUBE_TOKEN = credentials ('sonarqubetoken')
     }
     stages {
         stage('Checkout'){
