@@ -1,9 +1,9 @@
 node {
-    // get maven installation path (name must match Global Tool Configuration)
+    
     def mvnHome = tool name: 'maven', type: 'maven'
 
     stage('Checkout') {
-        // uses GitHub credentials you added earlier
+       
         git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/preetishinge/Springboot-sonarqube'
         sh 'ls -la'
     }
@@ -17,7 +17,7 @@ node {
     }
 
     stage('SonarQube Analysis') {
-        // use secret text credential for token
+        
         withCredentials([string(credentialsId: 'sonarqubetoken', variable: 'SONARQUBE_TOKEN')]) {
             sh """
                 ${mvnHome}/bin/mvn sonar:sonar \
@@ -28,19 +28,6 @@ node {
         }
     }
 
-    // optional quality gate check (requires SonarQube configured in Jenkins with name 'MySonarServer')
-    stage('Quality Gate (optional)') {
-        // uncomment the block below if you configured SonarQube server in Jenkins
-        /*
-        withSonarQubeEnv('MySonarServer') {
-            sh "${mvnHome}/bin/mvn sonar:sonar -Dsonar.projectKey=springboot-demo"
-        }
-        timeout(time: 2, unit: 'MINUTES') {
-            def qg = waitForQualityGate()
-            if (qg.status != 'OK') {
-                error "Quality Gate failed: ${qg.status}"
-            }
-        }
-        */
+
     }
 }
