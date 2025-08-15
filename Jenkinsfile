@@ -40,5 +40,6 @@ pipeline {
                 nohup java -jar target/simple-hello-rashi-1.0.0.jar --server.port=9090 > app.log 2>&1 &
                 '''
             }
+         }    
     }
 }
