@@ -4,13 +4,13 @@ pipeline {
         maven 'maven'
     }
     environment {
-        SONARQUBE_URL = 'https://d6312cd2eccd.ngrok-free.app/projects'
-        SONARQUBE_TOKEN = credentials ('sonarqubetoken')
+        SONARQUBE_URL = 'http://13.41.205.164:9000/projects/create'
+        SONARQUBE_TOKEN = credentials ('Sonarqube cred')
     }
     stages {
         stage('Checkout'){
             steps{
-                git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/preetishinge/Springboot-sonarqube'
+                git branch: 'main', credentialsId: 'git cred', url: 'https://github.com/preetishinge/Springboot-sonarqube'
                 sh 'ls -la'
             }
         }
@@ -28,16 +28,16 @@ pipeline {
             steps{
                 sh '''
                 mvn sonar:sonar \
-                  -Dsonar.projectKey=springboot-demo \
-                  -Dsonar.host.url=https://d6312cd2eccd.ngrok-free.app \
-                  -Dsonar.login=$SONARQUBE_TOKEN
+                  -Dsonar.projectKey=simple-hello-Preeti \
+                  -Dsonar.host.url=http://13.41.205.164:9000 \
+                  -Dsonar.login=$Sonarqube cred
                 '''
             }
         }
          stage('Deploy'){
             steps{
                 sh '''
-                nohup java -jar target/simple-hello-1.0.0.jar --server.port=9090 > app.log 2>&1 &
+                nohup java -jar target/simple-hello-Preeti-1.0.0.jar --server.port=9090 > app.log 2>&1 &
                 '''
             }
          }    
