@@ -5,12 +5,12 @@ pipeline {
     }
     environment {
         SONARQUBE_URL = 'http://13.41.205.164:9000/projects/create'
-        SONARQUBE_TOKEN = credentials ('Sonarqube cred')
+        SONARQUBE_TOKEN = credentials ('Sonarqube-cred')
     }
     stages {
         stage('Checkout'){
             steps{
-                git branch: 'main', credentialsId: 'git cred', url: 'https://github.com/preetishinge/Springboot-sonarqube'
+                git branch: 'main', credentialsId: 'git-cred', url: 'https://github.com/preetishinge/Springboot-sonarqube'
                 sh 'ls -la'
             }
         }
@@ -30,7 +30,7 @@ pipeline {
                 mvn sonar:sonar \
                   -Dsonar.projectKey=simple-hello-Preeti \
                   -Dsonar.host.url=http://13.41.205.164:9000 \
-                  -Dsonar.login=$Sonarqube cred
+                  -Dsonar.login=$Sonarqube-cred
                 '''
             }
         }
