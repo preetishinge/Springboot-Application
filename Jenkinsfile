@@ -30,7 +30,7 @@ pipeline {
                 mvn sonar:sonar \
                   -Dsonar.projectKey=simple-hello-Preeti \
                   -Dsonar.host.url=http://13.41.205.164:9000 \
-                  -Dsonar.login=$SONARQUBE-CRED
+                  -Dsonar.login=$SONARQUBE CRED
                 '''
             }
         }
