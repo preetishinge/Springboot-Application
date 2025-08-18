@@ -5,7 +5,7 @@ pipeline {
     }
     environment {
         SONARQUBE_URL = 'http://13.41.205.164:9000/projects/create'
-        SONARQUBE_TOKEN = credentials ('SONARQUBE-CRED')
+        SONARQUBE_TOKEN = credentials ('Sonarqube-cred')
     }
     stages {
         stage('Checkout'){
@@ -30,7 +30,7 @@ pipeline {
                 mvn sonar:sonar \
                   -Dsonar.projectKey=simple-hello-Preeti \
                   -Dsonar.host.url=http://13.41.205.164:9000 \
-                  -Dsonar.login=$SONARQUBE-CRED
+                  -Dsonar.login=$Sonarqube-cred
                 '''
             }
         }
