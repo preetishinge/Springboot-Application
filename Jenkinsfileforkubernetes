@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "preeti730/simple-hello"
+        K8S_NAMESPACE = "preeti"
+        CLUSTER_NAME = "batch4-Team3-cluster"
+        REPO_URL = "https://github.com/preetishinge/Springboot-Docker.git"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    url: env.REPO_URL
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                   docker build -t $DOCKER_IMAGE:$BUILD_NUMBER .
+                   docker tag $DOCKER_IMAGE:$BUILD_NUMBER $DOCKER_IMAGE:latest
+                """
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub-cred',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                       echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                       docker push $DOCKER_IMAGE:$BUILD_NUMBER
+                       docker push $DOCKER_IMAGE:latest
+                    """
+                }
+            }
+        }
+
+        stage('Update kubeconfig for EKS') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                                  credentialsId: 'aws-credentials-id']]) {
+                    sh """
+                       aws eks update-kubeconfig --region <your-region> --name $CLUSTER_NAME
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                sh """
+                   kubectl set image deployment/springboot-hello \
+                     springboot-hello=$DOCKER_IMAGE:$BUILD_NUMBER -n $K8S_NAMESPACE
+                   kubectl rollout status deployment/springboot-hello -n $K8S_NAMESPACE
+                """
+            }
+        }
+    }
+}
+
