@@ -51,24 +51,18 @@ pipeline {
 
 
         stage('Update kubeconfig for EKS') {
-            steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
-                                  credentialsId: 'aws-credentials-id']]) {
-                    sh """
-                       aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
-                    """
-                }
-            }
+    steps {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
+                          credentialsId: 'aws-credentials-id']]) {
+            sh """
+            aws eks update-kubeconfig --region <your-region> --name <your-cluster-name>
+            """
         }
+    }
+}
 
-        stage('Deploy to EKS') {
-            steps {
-                sh """
-                   kubectl set image deployment/springboot-hello \
-                     springboot-hello=$DOCKER_IMAGE:$BUILD_NUMBER -n $K8S_NAMESPACE
-                   kubectl rollout status deployment/springboot-hello -n $K8S_NAMESPACE
-                """
-            }
-        }
+stage('Deploy to EKS') {
+    steps {
+        sh "kubectl apply -f k8s-deployment.yaml"
     }
 }
