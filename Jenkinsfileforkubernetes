@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            // Jenkins will run inside a Docker image that has Docker installed
+            // Run Jenkins stages in a Docker image that already has Docker installed
             image 'docker:24.0.7'
             args '-v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2'
         }
@@ -12,11 +12,11 @@ pipeline {
         K8S_NAMESPACE  = "preeti"
         CLUSTER_NAME   = "batch4-Team3-cluster"
         REPO_URL       = "https://github.com/preetishinge/Springboot-Docker.git"
-        AWS_REGION     = "eu-west-2"   // 👉 update with your region
+        AWS_REGION     = "ap-south-1"   // 👉 change to your actual region
     }
 
     tools {
-        maven 'maven3'   // 👈 This must match exactly the name you set in Jenkins Tool Config
+        maven 'maven3'   // 👈 must match your Jenkins tool config name
     }
 
     stages {
