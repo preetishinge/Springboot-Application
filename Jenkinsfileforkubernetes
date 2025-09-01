@@ -17,6 +17,9 @@ pipeline {
         }
 
         stage('Build with Maven') {
+            tools {
+                maven 'Maven3'   // 👈 This matches the name you set in Jenkins Tool Config
+            }
             steps {
                 sh 'mvn clean package -DskipTests'
             }
@@ -69,4 +72,3 @@ pipeline {
         }
     }
 }
-
