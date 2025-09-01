@@ -1,26 +1,8 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = "preeti730/simple-hello"
-        K8S_NAMESPACE = "preeti"
-        CLUSTER_NAME = "batch4-Team3-cluster"
-        REPO_URL = "https://github.com/preetishinge/Springboot-Docker.git"
-        AWS_REGION = "eu-west-2"   // 🔹 update with your EKS region
-    }
-
-    tools {
-        maven 'maven3'    // must match Jenkins Tool Config name
-    }
-
     stages {
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main', url: env.REPO_URL
-            }
-        }
-
-        stage('Build with Maven') {
+        stage('Build') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
@@ -28,41 +10,28 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh """
-                   docker build -t $DOCKER_IMAGE:$BUILD_NUMBER .
-                   docker tag $DOCKER_IMAGE:$BUILD_NUMBER $DOCKER_IMAGE:latest
-                """
+                sh 'docker build -t preeti730/simple-hello:latest .'
             }
         }
 
-       stage('Push to Docker Hub') {
-    steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-preeti', 
-                                          usernameVariable: 'DOCKERHUB_USER', 
-                                          passwordVariable: 'DOCKERHUB_PASS')]) {
-            sh """
-            echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
-            docker push preeti730/simple-hello:15
-            docker push preeti730/simple-hello:latest
-            """
-           }
-         }
-    }
-
-
-        stage('Update kubeconfig for EKS') {
-    steps {
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                          credentialsId: 'aws-credentials-id']]) {
-            sh """
-            aws eks update-kubeconfig --region <your-region> --name <your-cluster-name>
-            """
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-preeti', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+                    sh '''
+                        echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
+                        docker push preeti730/simple-hello:latest
+                    '''
+                }
+            } // <-- Make sure this closes withCredentials
         }
-    }
-}
 
-stage('Deploy to EKS') {
-    steps {
-        sh "kubectl apply -f k8s-deployment.yaml"
-    }
-}
+        stage('Deploy to EKS') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-id']]) {
+                    sh 'aws eks update-kubeconfig --region <region> --name <cluster-name>'
+                    sh 'kubectl apply -f k8s-deployment.yaml'
+                } // <-- closes withCredentials
+            } // <-- closes steps
+        }
+    } // <-- closes stages
+} // <-- closes pipeline
