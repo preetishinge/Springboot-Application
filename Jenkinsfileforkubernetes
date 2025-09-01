@@ -6,7 +6,7 @@ pipeline {
         K8S_NAMESPACE = "preeti"
         CLUSTER_NAME = "batch4-Team3-cluster"
         REPO_URL = "https://github.com/preetishinge/Springboot-Docker.git"
-        AWS_REGION = "eu-west-2"   // 🔹 update with your EKS region
+        AWS_REGION = "us-east-1"   // 🔹 update with your EKS region
     }
 
     tools {
