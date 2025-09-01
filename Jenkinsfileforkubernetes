@@ -1,22 +1,16 @@
 pipeline {
-    agent {
-        docker {
-            // Run Jenkins stages in a Docker image that already has Docker installed
-            image 'docker:24.0.7'
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2'
-        }
-    }
+    agent any   // ✅ Run directly on Jenkins node
 
     environment {
-        DOCKER_IMAGE   = "preeti730/simple-hello"
-        K8S_NAMESPACE  = "preeti"
-        CLUSTER_NAME   = "batch4-Team3-cluster"
-        REPO_URL       = "https://github.com/preetishinge/Springboot-Docker.git"
-        AWS_REGION     = "ap-south-1"   // 👉 change to your actual region
+        DOCKER_IMAGE = "preeti730/simple-hello"
+        K8S_NAMESPACE = "preeti"
+        CLUSTER_NAME = "batch4-Team3-cluster"
+        AWS_REGION = "eu-west-2"   // 👈 update to your EKS region
+        REPO_URL = "https://github.com/preetishinge/Springboot-Docker.git"
     }
 
     tools {
-        maven 'maven3'   // 👈 must match your Jenkins tool config name
+        maven 'Maven3'   // 👈 matches your Jenkins Global Tool Config
     }
 
     stages {
@@ -44,9 +38,9 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-cred',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
+                        credentialsId: 'dockerhub-cred',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh """
                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
@@ -62,9 +56,7 @@ pipeline {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
                                   credentialsId: 'aws-credentials-id']]) {
                     sh """
-                       aws eks update-kubeconfig \
-                         --region $AWS_REGION \
-                         --name $CLUSTER_NAME
+                       aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
                     """
                 }
             }
