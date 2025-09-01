@@ -35,26 +35,19 @@ pipeline {
             }
         }
 
-        stage('Push to Docker Hub') {
+       stage('Push to Docker Hub') {
     steps {
-        withCredentials([usernamePassword(
-            credentialsId: 'dockerhub-cred',
-            usernameVariable: 'DOCKER_USER',
-            passwordVariable: 'DOCKER_PASS'
-        )]) {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-preeti', 
+                                          usernameVariable: 'DOCKERHUB_USER', 
+                                          passwordVariable: 'DOCKERHUB_PASS')]) {
             sh """
-               echo "🔑 Logging in to Docker Hub as $DOCKER_USER"
-               echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-
-               echo "📦 Pushing Docker image: $DOCKER_IMAGE:$BUILD_NUMBER"
-               docker push $DOCKER_IMAGE:$BUILD_NUMBER
-
-               echo "📦 Updating latest tag"
-               docker push $DOCKER_IMAGE:latest
+            echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
+            docker push preeti730/simple-hello:15
+            docker push preeti730/simple-hello:latest
             """
            }
-        }
-      }
+         }
+    }
 
 
         stage('Update kubeconfig for EKS') {
