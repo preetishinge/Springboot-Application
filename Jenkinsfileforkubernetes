@@ -10,7 +10,7 @@ pipeline {
     }
 
     tools {
-        maven 'maven3'   // must match Jenkins Tool Config name
+        maven 'maven3'    // must match Jenkins Tool Config name
     }
 
     stages {
