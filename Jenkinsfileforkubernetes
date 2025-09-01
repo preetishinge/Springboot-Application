@@ -10,7 +10,7 @@ pipeline {
     }
 
     tools {
-        maven 'Maven3'   // 👈 matches your Jenkins Global Tool Config
+        maven 'maven3'   // 👈 matches your Jenkins Global Tool Config
     }
 
     stages {
