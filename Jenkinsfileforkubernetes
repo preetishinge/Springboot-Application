@@ -3,10 +3,10 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "preeti730/simple-hello"        // your Docker Hub repo
-        DOCKER_HUB_CREDS = "dockerhub-cred"           // Jenkins Docker Hub credentials ID
+        DOCKER_HUB_CREDS = "dockerhub-preeti"           // Jenkins Docker Hub credentials ID
         KUBE_NAMESPACE = "preeti"                     // your EKS namespace
         CLUSTER_NAME = "batch4-Team3-cluster"         // your EKS cluster name
-        AWS_REGION = "us-east-1"                      // update to your EKS region
+        AWS_REGION = "eu-west-2"                      // update to your EKS region
         REPO_URL = "https://github.com/preetishinge/Springboot-Docker.git"
     }
 
