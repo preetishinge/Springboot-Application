@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-hello
+  namespace: preeti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: springboot-hello
+  template:
+    metadata:
+      labels:
+        app: springboot-hello
+    spec:
+      containers:
+      - name: springboot-hello
+        image: preeti730/simple-hello:latest
+        ports:
+        - containerPort: 8080
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: springboot-service
+#   namespace: preeti
+# spec:
+#   type: ClusterIP
+#   selector:
+#     app: springboot-hello
+#   ports:
+#     - port: 8080
+#       targetPort: 8080
