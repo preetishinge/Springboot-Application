@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "preeti730/simple-hello:latest"
-        DOCKER_HUB_CREDS = "dockerhub-creds"
-        AWS_CREDS = "aws-eks-creds"
-        KUBE_NAMESPACE = "preeti"
+        DOCKER_IMAGE = "preeti730/simple-hello:latest"   // Docker Hub image
+        DOCKER_HUB_CREDS = "dockerhub-creds"             // Jenkins creds for DockerHub
+        AWS_CREDS = "aws-eks-creds"                      // AWS creds for EKS
+        KUBE_NAMESPACE = "preeti"                        // Namespace for your app
     }
 
     tools {
@@ -13,6 +13,14 @@ pipeline {
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'preeti-gitcred', 
+                    url: 'https://github.com/preetishinge/Springboot-Docker.git', 
+                    branch: 'main'
+            }
+        }
+
         stage('Build with Maven') {
             steps {
                 sh 'mvn clean package -DskipTests'
@@ -35,13 +43,16 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "$AWS_CREDS"]]) {
                     sh '''
+                        echo "🔹 Updating kubeconfig..."
                         aws eks update-kubeconfig --region eu-west-2 --name batch4-Team3-cluster
+
+                        echo "🔹 Creating namespace if not exists..."
                         kubectl create namespace $KUBE_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-                        
-                        # Update deployment image
+
+                        echo "🔹 Updating image in deployment manifest..."
                         sed -i "s|preeti730/simple-hello:latest|$DOCKER_IMAGE|g" K8s/springboot-deployment.yaml
-                        
-                        # Apply deployment & service
+
+                        echo "🔹 Applying Deployment & Service..."
                         kubectl apply -f K8s/springboot-deployment.yaml
                         kubectl apply -f K8s/service.yaml
                     '''
@@ -52,6 +63,7 @@ pipeline {
         stage('Apply Ingress') {
             steps {
                 sh '''
+                  echo "🔹 Applying ingress..."
                   kubectl apply -f K8s/ingress.yaml
                 '''
             }
@@ -60,9 +72,17 @@ pipeline {
         stage('Post-Deployment Health Check') {
             steps {
                 sh '''
+                  echo "🔹 Checking rollout status..."
                   kubectl rollout status deployment/springboot-hello -n $KUBE_NAMESPACE --timeout=60s
+                  
+                  echo "🔹 Listing pods..."
                   kubectl get pods -n $KUBE_NAMESPACE
+
+                  echo "🔹 Listing services..."
                   kubectl get svc -n $KUBE_NAMESPACE
+
+                  echo "🔹 Checking ingress..."
+                  kubectl get ingress -n $KUBE_NAMESPACE
                 '''
             }
         }
