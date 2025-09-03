@@ -1,1 +1,20 @@
-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-hello
+  namespace: preeti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: springboot-hello
+  template:
+    metadata:
+      labels:
+        app: springboot-hello
+    spec:
+      containers:
+        - name: springboot-hello
+          image: preeti730/simple-hello:latest   # Jenkins will update this
+          ports:
+            - containerPort: 8080
