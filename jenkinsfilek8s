@@ -2,25 +2,17 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "preeti730/simple-hello:latest"  // Docker Hub image
-        KUBE_NAMESPACE = "preeti"                        // Namespace for your app
-        AWS_REGION = "eu-west-2"                         // AWS region
-        CLUSTER_NAME = "batch4-Team3-cluster"           // EKS Cluster Name
+        DOCKER_IMAGE = "preeti730/simple-hello:latest"
+        DOCKER_HUB_CREDS = "dockerhub-creds"
+        AWS_CREDS = "aws-eks-creds"
+        KUBE_NAMESPACE = "preeti"
     }
 
     tools {
-        maven 'maven3'   // Maven installed in Jenkins global tools
+        maven 'maven3'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git credentialsId: 'preeti-gitcred', 
-                    url: 'https://github.com/Sejalkarwa/MySpringBootApp-Sejal.git', 
-                    branch: 'main'
-            }
-        }
-
         stage('Build with Maven') {
             steps {
                 sh 'mvn clean package -DskipTests'
@@ -29,7 +21,7 @@ pipeline {
 
         stage('Docker Build & Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_CREDS", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         docker build -t $DOCKER_IMAGE .
                         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
@@ -41,32 +33,26 @@ pipeline {
 
         stage('Deploy to EKS') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-eks-creds']]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "$AWS_CREDS"]]) {
                     sh '''
-                        # Update kubeconfig for Jenkins
-                        aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
-
-                        # Create namespace if not exists
+                        aws eks update-kubeconfig --region eu-west-2 --name batch4-Team3-cluster
                         kubectl create namespace $KUBE_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-
-                        # Replace image in deployment manifest
-                        sed -i "s|preeti730/simple-hello:latest|$DOCKER_IMAGE|g" k8s/springboot-deployment.yaml
-
-                        # Apply deployment
-                        kubectl apply -f k8s/springboot-deployment.yaml
+                        
+                        # Update deployment image
+                        sed -i "s|preeti730/simple-hello:latest|$DOCKER_IMAGE|g" K8s/springboot-deployment.yaml
+                        
+                        # Apply deployment & service
+                        kubectl apply -f K8s/springboot-deployment.yaml
+                        kubectl apply -f K8s/service.yaml
                     '''
                 }
             }
         }
 
-        stage('Apply Service & Ingress') {
+        stage('Apply Ingress') {
             steps {
                 sh '''
-                    # Apply service
-                    kubectl apply -f k8s/service.yaml
-
-                    # Apply ingress
-                    kubectl apply -f k8s/ingress.yaml
+                  kubectl apply -f K8s/ingress.yaml
                 '''
             }
         }
@@ -74,14 +60,9 @@ pipeline {
         stage('Post-Deployment Health Check') {
             steps {
                 sh '''
-                    echo "Checking rollout status..."
-                    kubectl rollout status deployment/springboot-hello -n $KUBE_NAMESPACE --timeout=60s
-                    
-                    echo "Listing pods..."
-                    kubectl get pods -n $KUBE_NAMESPACE
-
-                    echo "Listing services..."
-                    kubectl get svc -n $KUBE_NAMESPACE
+                  kubectl rollout status deployment/springboot-hello -n $KUBE_NAMESPACE --timeout=60s
+                  kubectl get pods -n $KUBE_NAMESPACE
+                  kubectl get svc -n $KUBE_NAMESPACE
                 '''
             }
         }
