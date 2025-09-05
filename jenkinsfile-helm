@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_IMAGE = "preeti730/springboot-app:1.0"
-        DOCKER_HUB_CREDS = "Docker_token" // Docker Hub credentials ID in Jenkins
+        DOCKER_HUB_CREDS = "docker-preeti" 
         KUBE_NAMESPACE = "springboot-app"
         HELM_RELEASE = "springboot-release"
         HELM_CHART_PATH = "helm-chart"
