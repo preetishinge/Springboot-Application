@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_IMAGE = "preeti730/springboot-app:1.0"
+        DOCKER_HUB_CREDS = "Docker_token" // Docker Hub credentials ID in Jenkins
+        KUBE_NAMESPACE = "springboot-app"
+        HELM_RELEASE = "springboot-release"
+        HELM_CHART_PATH = "helm-chart"
+    }
+    tools {
+        maven 'maven3'
+    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git credentialsId: 'git-preeti', url: 'https://github.com/preetishinge/Springboot-Docker.git', branch: 'main'
+            }
+        }
+
+        stage('Build Spring Boot App') {
+            steps {
+                echo "Building Spring Boot application..."
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Build & Push Docker Image') {
+            steps {
+                script {
+                    echo "Building Docker Image..."
+                    sh "docker build -t $DOCKER_IMAGE ."
+
+                    echo "Logging in to Docker Hub..."
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                        echo "Pushing Docker Image to Hub..."
+                        sh "docker push $DOCKER_IMAGE"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes with Helm') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig-preeti']) {
+                    sh """
+                        helm upgrade --install ${HELM_RELEASE} ${HELM_CHART_PATH} \
+                          --namespace ${KUBE_NAMESPACE} \
+                          --set image.repository=preeti730/springboot-app \
+                          --set image.tag=1.0 \
+                          --create-namespace
+                    """
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig-preeti']) {
+                    sh "kubectl get pods -n ${KUBE_NAMESPACE}"
+                    sh "kubectl get svc -n ${KUBE_NAMESPACE}"
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo "✅ Deployment Successful!"
+        }
+        failure {
+            echo "❌ Deployment Failed!"
+        }
+    }
+}
