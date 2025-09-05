@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git credentialsId: 'git-preeti', url: 'https://github.com/preetishinge/Springboot-Docker.git', branch: 'main'
+                git credentialsId: 'git-preeti', url: 'https://github.com/preetishinge/Springboot-Application.git', branch: 'main'
             }
         }
 
